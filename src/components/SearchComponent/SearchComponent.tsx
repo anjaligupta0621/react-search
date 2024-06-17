@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import useDebounce from "../../hooks/useDebounce";
+import useThrottle from "../../hooks/useThrottle";
 
 interface Book {
   id: string;
@@ -10,18 +12,21 @@ const SearchComponent = () => {
   const [options, setOptions] = useState<Book[]>([]);
   const [showOptions, setShowOptions] = useState<boolean>(false);
 
+  const debouncedSearchInput = useDebounce(searchInput, 1000);
+  // const throttledSearchInput = useThrottle(searchInput, 2000);
+
   useEffect(() => {
-    if (searchInput.length > 1) {
+    if (debouncedSearchInput.length > 0) {
       const fetchData = async () => {
         const response = await fetch(
           `https://www.googleapis.com/books/v1/volumes?q=${searchInput}&startIndex=0&maxResults=20`
         );
         const data = await response.json();
         console.log(data.items);
-        const books = data.items.map((item: any) => ({
+        const books = data.items?.map((item: any) => ({
           id: item.id,
           title: item.volumeInfo.title,
-        }));
+        })) ?? [];
         console.log(data.items);
         setOptions(books);
         setShowOptions(true);
@@ -30,7 +35,7 @@ const SearchComponent = () => {
     } else {
       setShowOptions(false);
     }
-  }, [searchInput]);
+  }, [debouncedSearchInput]);
 
   const handleOptionClick = (title: string) => {
     setSearchInput(title);
@@ -40,10 +45,11 @@ const SearchComponent = () => {
 
 
   const handleFocus = () => {
-    if (searchInput.length > 1) {
+    if (searchInput.length > 0) {
       setShowOptions(true);
     }
   };
+
 
   return (
     <div className="search-bar">
@@ -54,7 +60,7 @@ const SearchComponent = () => {
         onFocus={handleFocus}
         placeholder="Book"
       />
-      {showOptions && options.length > 0 && (
+      {showOptions && searchInput.length > 0 && options.length > 0 && (
         <div className="dropdown">
           {options.map((book, index) => (
             <div
