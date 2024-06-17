@@ -2,6 +2,10 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SearchComponent from "./SearchComponent";
 
+jest.mock('../../hooks/useDebounce', () => {
+  return (value: any) => value;
+});
+
 describe("SearchComponent", () => {
   const mockBooksData = {
     items: [
@@ -19,6 +23,7 @@ describe("SearchComponent", () => {
       },
     ],
   };
+
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -42,9 +47,10 @@ describe("SearchComponent", () => {
     fireEvent.change(inputElement, { target: { value: 'title' } });
 
     await waitFor(() => {
-        const books = screen.getAllByText(/title 1|title 2/i);
-        fireEvent.click(books[1]);
-        expect(inputElement).toHaveValue('Title 2');
-      });
+      const books = screen.getAllByText(/title 1|title 2/i);
+      fireEvent.click(books[1]);
+      expect(inputElement).toHaveValue('Title 2');
+    }, { timeout: 1000 }); 
+
   });
 });
